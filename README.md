@@ -1,2 +1,2 @@
-# CNC Pipe Bending Machine
- Embedded system application for Pipe Bending CNC Machine
+# Sound Level Meter
+ Desktop application for Sound Level Meter
