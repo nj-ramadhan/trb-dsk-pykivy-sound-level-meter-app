@@ -1,0 +1,154 @@
+#:kivy 2.1.0
+
+<ScreenMain>:
+    MDBoxLayout:
+        orientation: "vertical"
+
+		# header layout
+        MDBoxLayout:
+            id: header_layout
+            orientation: "horizontal"
+            padding: 20
+			spacing: 20
+			size_hint_y: 0.2
+                    
+            Image:
+                id: logo
+                source:'asset/logo.png'
+                size_hint_x: 0.25
+                allow_stretch: True 
+
+			MDBoxLayout:
+				orientation: "vertical"
+
+				MDLabel:
+					id: subtitle            
+					text: "SOUND LEVEL METER"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H3'
+                  
+            Image:
+                id: logo
+                source:'asset/logo-dishub.png'
+                size_hint_x: 0.25
+                allow_stretch: True  
+
+		# title layout
+		MDBoxLayout:
+			id: layout_title
+			orientation: "horizontal"
+			padding: 20
+			spacing: 20
+			size_hint_y: 0.1
+
+			MDLabel:
+				id: lb_comm
+				text: "Status : Disconnected"
+				halign: "center"
+				valign: "middle"
+				font_style: 'H6'
+
+			MDIconButton:
+				id: bt_shutdown
+				icon: "power"
+				md_bg_color: "#A51919"
+				theme_text_color: "Custom"
+				text_color: "#EEEEEE"
+				size_hint_x: 0.1
+				on_press: root.exec_shutdown()
+
+		# main layout
+		MDBoxLayout:
+			id: layout_main
+			orientation: "horizontal"
+			size_hint_y: 0.7
+			padding:20
+			spacing:20
+
+			MDBoxLayout:
+				id: layout_display
+				orientation: "vertical"
+				size_hint_x: 0.4
+				padding:20
+				spacing:20
+
+				MDLabel:
+					id: lb_datetime
+					text: "17/08/2024"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H6'
+
+				MDBoxLayout:
+					orientation: "horizontal"
+
+					MDLabel:
+						id: lb_sound
+						size_hint_x: 0.7
+						text: "45.4"
+						halign: "center"
+						valign: "middle"
+						font_style: 'H1'
+
+					MDLabel:
+						text: "Hz"
+						size_hint_x: 0.3
+						halign: "center"
+						valign: "middle"
+						font_style: 'Subtitle1'
+
+				MDBoxLayout:
+					id: layout_display
+					orientation: "horizontal"
+					padding:20
+					spacing:20
+
+					MDIconButton:
+						id: bt_run
+						icon: "play"
+						theme_text_color: "Custom"
+						text_color: "#EEEEEE"
+						md_bg_color: "#999999"
+						size_hint_x: 0.5
+						on_press: root.exec_play()
+
+					MDIconButton:
+						id: bt_stop
+						icon: "stop"
+						theme_text_color: "Custom"
+						text_color: "#EEEEEE"
+						md_bg_color: "#999999"
+						size_hint_x: 0.5
+						on_press: root.exec_stop()
+
+			MDBoxLayout:
+				id: layout_graph
+				orientation: "horizontal"
+				size_hint_x: 0.7
+				md_bg_color: "#DDDDDD"
+				padding:20
+				spacing:20
+
+				MDBoxLayout:
+					id: layout_notif
+					orientation: "vertical"
+					padding:20
+					spacing:20
+
+					MDLabel:
+						text: "Measurement Result"
+						halign: "center"
+						valign: "middle"
+						font_style: 'H6'
+
+					MDLabel:
+						id: lb_status
+						md_bg_color: "#A51919"
+						color: "#EEEEEE"
+						text: "PASS"
+						halign: "center"
+						valign: "middle"
+						font_style: 'H1'
+			
+			
