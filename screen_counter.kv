@@ -1,0 +1,222 @@
+#:kivy 2.1.0
+
+<ScreenCounter>:
+    MDBoxLayout:
+        orientation: "vertical"
+
+		# header layout
+        MDBoxLayout:
+            id: header_layout
+            orientation: "horizontal"
+            padding: 20
+			spacing: 20
+			size_hint_y: 0.2
+                    
+            Image:
+                id: logo
+                source:'asset/logo-trb.png'
+                size_hint_x: 0.15
+                allow_stretch: True 
+
+			MDBoxLayout:
+				orientation: "vertical"
+				size_hint_x: 0.7
+
+				MDLabel:
+					id: title            
+					text: "VEHICLE INSPECTING INTEGRATION SYSTEM"
+					halign: "left"
+					valign: "middle"
+					font_style: 'H3'
+
+				MDLabel:
+					id: subtitle            
+					text: "SOUND LEVEL METER / SLM"
+					halign: "left"
+					valign: "middle"
+					font_style: 'H5'
+
+			MDBoxLayout:
+				orientation: "vertical"
+				size_hint_x: 0.15
+
+				MDIconButton:
+					id: bt_shutdown
+					icon: "power"
+					md_bg_color: "#A51919"
+					theme_text_color: "Custom"
+					text_color: "#EEEEEE"
+					size_hint_x: 1
+					on_press: root.exec_shutdown()
+
+				MDLabel:
+					id: lb_time
+					text: "12:34:00"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H6'
+
+				MDLabel:
+					id: lb_date
+					text: "17/08/2024"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H6'
+
+				MDLabel:
+					id: lb_operator
+					text: "Nama Operator"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H6'
+
+				MDLabel:
+					id: lb_comm
+					text: "Status : Disconnected"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H6'
+
+		# main layout
+		MDBoxLayout:
+			id: layout_main
+			orientation: "horizontal"
+			size_hint_y: 0.6
+			padding:20
+			spacing:20
+
+			MDBoxLayout:
+				id: layout_display
+				orientation: "vertical"
+				padding:20
+				spacing:20
+
+				MDBoxLayout:
+					orientation: "vertical"
+
+					MDIconButton:
+						icon: "arrow-left"
+						on_press: root.open_screen_main()
+						size_hint_y: 0.05
+
+					MDLabel:
+						id: lb_test_subtitle
+						text: "Memulai Pengujian Kebisingan Dalam"
+						halign: "center"
+						valign: "middle"
+						font_style: 'Subtitle1'
+						size_hint_y: 0.05
+
+					MDLabel:
+						id: lb_sound
+						text: "..."
+						halign: "center"
+						valign: "middle"
+						font_size: '200dp'
+						size_hint_y: 0.6
+
+					MDLabel:
+						id: lb_test_result
+						halign: "center"
+						valign: "middle"
+						font_style: 'H3'
+						size_hint_y: 0.15
+
+					MDBoxLayout:
+						orientation: "horizontal"
+						size_hint_y: 0.15
+
+						MDFillRoundFlatIconButton:
+							id: bt_run
+							text: "TEST ULANG"
+							icon: "reload"
+							theme_text_color: "Custom"
+							text_color: "#EEEEEE"
+							md_bg_color: "#A51919"
+							size_hint_x: 0.3
+							disabled: True
+							on_press: root.exec_restart()
+
+						MDFillRoundFlatIconButton:
+							id: bt_stop
+							icon: "printer"
+							text: "PRINT & SIMPAN HASIL UKUR"
+							theme_text_color: "Custom"
+							text_color: "#EEEEEE"
+							md_bg_color: "#19A56B"
+							size_hint_x: 0.3
+							disabled: True
+							on_press: root.exec_stop()
+
+        MDBoxLayout:
+            orientation: "horizontal"
+			size_hint_y: 0.1
+
+			MDBoxLayout:
+				orientation: "horizontal"
+				padding: 20
+				spacing: 20
+				md_bg_color: "#4471C4"
+				size_hint_x: 0.4
+				
+				Image:
+					id: logo
+					source:'asset/logo-sorong.png'
+					size_hint_x: 0.1
+					allow_stretch: True  
+
+				Image:
+					id: logo
+					source:'asset/logo-dishub.png'
+					size_hint_x: 0.1
+					allow_stretch: True  
+
+				MDBoxLayout:
+					orientation: "vertical"
+					size_hint_x: 0.8
+
+					MDLabel:			
+						text: "PEMERINTAH KABUPATEN SORONG"
+						halign: "left"
+						valign: "middle"
+						font_style: 'Subtitle1'
+
+					MDLabel:			
+						text: "DINAS PERHUBUNGAN"
+						halign: "left"
+						valign: "middle"
+						font_style: 'Subtitle1'
+
+					MDLabel:			
+						text: "UNIT PELAKSANAAN UJI BERKALA KENDARAAN BERMOTOR"
+						halign: "left"
+						valign: "middle"
+						font_style: 'Subtitle1'
+
+					MDLabel:
+						text: " Klamasen, Distrik Mariat, Kabupaten Sorong, Papua Barat Daya. 98416"
+						halign: "left"
+						valign: "middle"
+						md_bg_color: "#EEEEEE"
+						theme_text_color: "Custom"
+						text_color: "#000000"
+						font_style: 'Subtitle2'
+
+			MDBoxLayout:
+				orientation: "vertical"
+				padding: 20
+				spacing: 20
+				md_bg_color: "#FFC000"
+				size_hint_x: 0.6
+
+				MDLabel:			
+					text: "INFORMASI"
+					halign: "left"
+					valign: "middle"
+					font_style: 'H5'
+
+				MDLabel:
+					text: " Ambang Batas Pengecekan adalah 83 dB hingga 118 dB"
+					halign: "left"
+					valign: "middle"
+					font_style: 'H6'

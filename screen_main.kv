@@ -14,141 +14,241 @@
                     
             Image:
                 id: logo
-                source:'asset/logo.png'
-                size_hint_x: 0.25
+                source:'asset/logo-trb.png'
+                size_hint_x: 0.15
                 allow_stretch: True 
 
 			MDBoxLayout:
 				orientation: "vertical"
+				size_hint_x: 0.7
+
+				MDLabel:
+					id: title            
+					text: "VEHICLE INSPECTING INTEGRATION SYSTEM"
+					halign: "left"
+					valign: "middle"
+					font_style: 'H3'
 
 				MDLabel:
 					id: subtitle            
-					text: "SOUND LEVEL METER"
-					halign: "center"
+					text: "SOUND LEVEL METER / SLM"
+					halign: "left"
 					valign: "middle"
-					font_style: 'H3'
-                  
-            Image:
-                id: logo
-                source:'asset/logo-dishub.png'
-                size_hint_x: 0.25
-                allow_stretch: True  
-
-		# title layout
-		MDBoxLayout:
-			id: layout_title
-			orientation: "horizontal"
-			padding: 20
-			spacing: 20
-			size_hint_y: 0.1
-
-			MDLabel:
-				id: lb_comm
-				text: "Status : Disconnected"
-				halign: "center"
-				valign: "middle"
-				font_style: 'H6'
-
-			MDIconButton:
-				id: bt_shutdown
-				icon: "power"
-				md_bg_color: "#A51919"
-				theme_text_color: "Custom"
-				text_color: "#EEEEEE"
-				size_hint_x: 0.1
-				on_press: root.exec_shutdown()
-
-		# main layout
-		MDBoxLayout:
-			id: layout_main
-			orientation: "horizontal"
-			size_hint_y: 0.7
-			padding:20
-			spacing:20
+					font_style: 'H5'
 
 			MDBoxLayout:
-				id: layout_display
 				orientation: "vertical"
-				size_hint_x: 0.4
-				padding:20
-				spacing:20
+				size_hint_x: 0.15
+
+				MDIconButton:
+					id: bt_shutdown
+					icon: "power"
+					md_bg_color: "#A51919"
+					theme_text_color: "Custom"
+					text_color: "#EEEEEE"
+					size_hint_x: 1
+					on_press: root.exec_shutdown()
 
 				MDLabel:
-					id: lb_datetime
+					id: lb_time
+					text: "12:34:00"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H6'
+
+				MDLabel:
+					id: lb_date
 					text: "17/08/2024"
 					halign: "center"
 					valign: "middle"
 					font_style: 'H6'
 
-				MDBoxLayout:
-					orientation: "horizontal"
+				MDLabel:
+					id: lb_operator
+					text: "Nama Operator"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H6'
 
-					MDLabel:
-						id: lb_sound
-						size_hint_x: 0.7
-						text: "45.4"
-						halign: "center"
-						valign: "middle"
-						font_style: 'H1'
+				MDLabel:
+					id: lb_comm
+					text: "Status : Disconnected"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H6'
 
-					MDLabel:
-						text: "Hz"
-						size_hint_x: 0.3
-						halign: "center"
-						valign: "middle"
-						font_style: 'Subtitle1'
-
-				MDBoxLayout:
-					id: layout_display
-					orientation: "horizontal"
-					padding:20
-					spacing:20
-
-					MDIconButton:
-						id: bt_run
-						icon: "play"
-						theme_text_color: "Custom"
-						text_color: "#EEEEEE"
-						md_bg_color: "#999999"
-						size_hint_x: 0.5
-						on_press: root.exec_play()
-
-					MDIconButton:
-						id: bt_stop
-						icon: "stop"
-						theme_text_color: "Custom"
-						text_color: "#EEEEEE"
-						md_bg_color: "#999999"
-						size_hint_x: 0.5
-						on_press: root.exec_stop()
+		# main layout
+		MDBoxLayout:
+			id: layout_main
+			orientation: "horizontal"
+			size_hint_y: 0.6
+			padding:20
+			spacing:20
 
 			MDBoxLayout:
-				id: layout_graph
 				orientation: "horizontal"
-				size_hint_x: 0.7
-				md_bg_color: "#DDDDDD"
 				padding:20
 				spacing:20
 
 				MDBoxLayout:
-					id: layout_notif
 					orientation: "vertical"
-					padding:20
-					spacing:20
+					size_hint_x: 0.7
+
+					MDBoxLayout:
+						orientation: "horizontal"
+						size_hint_y: 0.1
+
+						MDIconButton:
+							icon: "reload"
+							on_press: root.exec_reload_table()
+
+						MDLabel:
+							text: "ANTRIAN KENDARAAN"
+							halign: "center"
+							valign: "middle"
+							font_style: 'H6'
+
+					MDBoxLayout:
+						id: layout_table
+
+				MDBoxLayout:
+					orientation: "vertical"
+					size_hint_x: 0.3
 
 					MDLabel:
-						text: "Measurement Result"
+						text: "KENDARAAN YANG AKAN DI TES"
 						halign: "center"
 						valign: "middle"
 						font_style: 'H6'
 
-					MDLabel:
-						id: lb_status
-						md_bg_color: "#A51919"
-						color: "#EEEEEE"
-						text: "PASS"
-						halign: "center"
+					MDBoxLayout:
+						orientation: "horizontal"
+						MDLabel:
+							text: "No. Antrian"
+							halign: "left"
+							valign: "middle"
+							font_style: 'Subtitle1'
+
+						MDLabel:
+							id: lb_no_antrian
+							halign: "left"
+							valign: "middle"
+							font_style: 'Subtitle1'
+
+					MDBoxLayout:
+						orientation: "horizontal"
+						MDLabel:
+							text: "No. Uji"
+							halign: "left"
+							valign: "middle"
+							font_style: 'Subtitle1'
+
+						MDLabel:
+							id: lb_no_uji
+							halign: "left"
+							valign: "middle"
+							font_style: 'Subtitle1'
+
+					MDBoxLayout:
+						orientation: "horizontal"
+						MDLabel:
+							text: "Jenis Kendaraan"
+							halign: "left"
+							valign: "middle"
+							font_style: 'Subtitle1'
+
+						MDLabel:
+							id: lb_id_jenis_kendaraan
+							halign: "left"
+							valign: "middle"
+							font_style: 'Subtitle1'
+
+					MDBoxLayout:
+						orientation: "horizontal"
+						MDLabel:
+							id: lb_status
+							halign: "left"
+							valign: "middle"
+							font_style: 'Subtitle1'
+
+						MDFillRoundFlatIconButton:
+							id: bt_run
+							icon: "play"
+							text: "MULAI TEST"
+							halign: "center"
+							disabled: True
+							on_press: root.exec_start()
+
+
+        MDBoxLayout:
+            orientation: "horizontal"
+			size_hint_y: 0.1
+
+			MDBoxLayout:
+				orientation: "horizontal"
+				padding: 20
+				spacing: 20
+				md_bg_color: "#4471C4"
+				size_hint_x: 0.4
+				
+				Image:
+					id: logo
+					source:'asset/logo-sorong.png'
+					size_hint_x: 0.1
+					allow_stretch: True  
+
+				Image:
+					id: logo
+					source:'asset/logo-dishub.png'
+					size_hint_x: 0.1
+					allow_stretch: True  
+
+				MDBoxLayout:
+					orientation: "vertical"
+					size_hint_x: 0.8
+
+					MDLabel:			
+						text: "PEMERINTAH KABUPATEN SORONG"
+						halign: "left"
 						valign: "middle"
-						font_style: 'H1'
-			
-			
+						font_style: 'Subtitle1'
+
+					MDLabel:			
+						text: "DINAS PERHUBUNGAN"
+						halign: "left"
+						valign: "middle"
+						font_style: 'Subtitle1'
+
+					MDLabel:			
+						text: "UNIT PELAKSANAAN UJI BERKALA KENDARAAN BERMOTOR"
+						halign: "left"
+						valign: "middle"
+						font_style: 'Subtitle1'
+
+					MDLabel:
+						text: " Klamasen, Distrik Mariat, Kabupaten Sorong, Papua Barat Daya. 98416"
+						halign: "left"
+						valign: "middle"
+						md_bg_color: "#EEEEEE"
+						theme_text_color: "Custom"
+						text_color: "#000000"
+						font_style: 'Subtitle2'
+
+			MDBoxLayout:
+				orientation: "vertical"
+				padding: 20
+				spacing: 20
+				md_bg_color: "#FFC000"
+				size_hint_x: 0.6
+
+				MDLabel:			
+					text: "INFORMASI"
+					halign: "left"
+					valign: "middle"
+					font_style: 'H5'
+
+				MDLabel:
+					text: " Ambang Batas Pengecekan adalah 83 dB hingga 118 dB"
+					halign: "left"
+					valign: "middle"
+					font_style: 'H6'
