@@ -3,12 +3,15 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.logger import Logger
 from kivy.core.window import Window
+from kivy.core.text import LabelBase
+from kivymd.font_definitions import theme_font_styles
 from kivymd.uix.datatables import MDDataTable
 from kivy.uix.screenmanager import ScreenManager
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.button import MDFillRoundFlatButton
 from kivymd.app import MDApp
-from kivy.metrics import dp
+from kivymd import fonts_path
+from kivy.metrics import dp, sp
 from kivymd.toast import toast
 import numpy as np
 import time
@@ -20,33 +23,33 @@ import mysql.connector
 
 colors = {
     "Red": {
-        "A200": "#A51919",
-        "A500": "#A51919",
-        "A700": "#A51919",
+        "A200": "#FF2A2A",
+        "A500": "#FF8080",
+        "A700": "#FFD5D5",
     },
 
     "Gray": {
-        "200": "#999999",
-        "500": "#999999",
-        "700": "#999999",
+        "200": "#CCCCCC",
+        "500": "#ECECEC",
+        "700": "#F9F9F9",
     },
 
     "Blue": {
         "200": "#4471C4",
-        "500": "#4471C4",
-        "700": "#4471C4",
+        "500": "#5885D8",
+        "700": "#6C99EC",
     },
 
     "Green": {
-        "200": "#19A56B",
-        "500": "#19A56B",
-        "700": "#19A56B",
+        "200": "#2CA02C", #41cd93
+        "500": "#2DB97F",
+        "700": "#AAA5AA",
     },
 
     "Yellow": {
-        "200": "#FFC000",
-        "500": "#FFC000",
-        "700": "#FFC000",
+        "200": "#ffD42A",
+        "500": "#ffE680",
+        "700": "#fff6D5",
     },
 
     "Light": {
@@ -61,8 +64,8 @@ colors = {
         "StatusBar": "101010",
         "AppBar": "#E0E0E0",
         "Background": "#111111",
-        "CardsDialogs": "#000000",
-        "FlatButtonDown": "#333333",
+        "CardsDialogs": "#222222",
+        "FlatButtonDown": "#DDDDDD",
     },
 }
 
@@ -85,7 +88,15 @@ sound_rms = 1
 flag_device = False
 flag_conn_stat = False
 flag_play = False
+
 dt_sound = 45.5
+dt_no_antrian = ""
+dt_no_reg = ""
+dt_no_uji = ""
+dt_nama = ""
+dt_jenis_kendaraan = ""
+dt_status = ""
+
 count_starting = 3
 count_get_data = 10
 
@@ -95,8 +106,9 @@ stream=p.open(format=FORMAT,channels=CHANNELS,rate=RATE,input=True,
 
 class ScreenMain(MDScreen):        
     def __init__(self, **kwargs):
-        global mydb, db_antrian
         super(ScreenMain, self).__init__(**kwargs)
+        global mydb, db_antrian
+
         try:
             mydb = mysql.connector.connect(
             host="localhost",
@@ -107,6 +119,8 @@ class ScreenMain(MDScreen):
 
             db_antrian = np.array([["001", "002", "003"],
                                     ["PB123XY","PB234YZ","PB345XZ"],
+                                    [ "Z1234SA", "Z2345SP", "Z3456SM"],
+                                    [ "Budi", "Ani", "Udin"],
                                     [ "Pick-Up", "Pribadi", "travel"],
                                     [ "0", "0", "1"]])
         except Exception as e:
@@ -124,15 +138,18 @@ class ScreenMain(MDScreen):
             pagination_menu_pos="auto",
             rows_num=10,
             column_data=[
-                ("No.", dp(20), self.sort_on_num),
-                ("Antrian", dp(30)),
-                ("No Reg Kendaraan", dp(70)),
+                ("No.", dp(10), self.sort_on_num),
+                ("Antrian", dp(20)),
+                ("No. Reg", dp(25)),
+                ("No. Uji", dp(35)),
+                ("Nama", dp(35)),
                 ("Jenis", dp(50)),
-                ("Action", dp(25)),
+                ("Status", dp(20)),
             ],
         )
         self.data_tables.bind(on_row_press=self.on_row_press)
         layout.add_widget(self.data_tables)
+        self.exec_reload_table()
 
     def sort_on_num(self, data):
         try:
@@ -141,17 +158,17 @@ class ScreenMain(MDScreen):
             toast("Error sorting data")
 
     def on_row_press(self, table, row):
+        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan, dt_status
+
         try:
             start_index, end_index  = row.table.recycle_data[row.index]["range"]
-            value1                  = row.table.recycle_data[start_index + 1]["text"]
-            value2                  = row.table.recycle_data[start_index + 2]["text"]
-            value3                  = row.table.recycle_data[start_index + 3]["text"]
-            value4                  = row.table.recycle_data[start_index + 4]["text"]
+            dt_no_antrian           = row.table.recycle_data[start_index + 1]["text"]
+            dt_no_reg               = row.table.recycle_data[start_index + 2]["text"]
+            dt_no_uji               = row.table.recycle_data[start_index + 3]["text"]
+            dt_nama                 = row.table.recycle_data[start_index + 4]["text"]
+            dt_jenis_kendaraan      = row.table.recycle_data[start_index + 5]["text"]
+            dt_status               = row.table.recycle_data[start_index + 6]["text"]
 
-            self.ids.lb_no_antrian.text = str(value1)
-            self.ids.lb_no_uji.text = str(value2)
-            self.ids.lb_id_jenis_kendaraan.text = str(value3)
-            self.ids.lb_status.text = str(value4)
         except Exception as e:
             toast_msg = f'error update table: {e}'
             toast(toast_msg)   
@@ -159,6 +176,7 @@ class ScreenMain(MDScreen):
     def regular_update_display(self, dt):
         global flag_conn_stat, flag_device
         global dt_sound, count_starting, count_get_data
+        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan, dt_status
 
         try:
             screen_counter = self.screen_manager.get_screen('screen_counter')
@@ -167,19 +185,33 @@ class ScreenMain(MDScreen):
             screen_counter.ids.lb_time.text = str(time.strftime("%H:%M:%S", time.localtime()))
             screen_counter.ids.lb_date.text = str(time.strftime("%d/%m/%Y", time.localtime()))
 
-            if(self.ids.lb_status.text == "Mulai Tes"):
-                self.ids.bt_run.disabled = False
+            self.ids.lb_no_antrian.text = str(dt_no_antrian)
+            self.ids.lb_no_reg.text = str(dt_no_reg)
+            self.ids.lb_no_uji.text = str(dt_no_uji)
+            self.ids.lb_nama.text = str(dt_nama)
+            self.ids.lb_jenis_kendaraan.text = str(dt_jenis_kendaraan)
+            # self.ids.lb_status.text = str(dt_status)
+
+            screen_counter.ids.lb_no_antrian.text = str(dt_no_antrian)
+            screen_counter.ids.lb_no_reg.text = str(dt_no_reg)
+            screen_counter.ids.lb_no_uji.text = str(dt_no_uji)
+            screen_counter.ids.lb_nama.text = str(dt_nama)
+            screen_counter.ids.lb_jenis_kendaraan.text = str(dt_jenis_kendaraan)
+            # screen_counter.ids.lb_status.text = str(dt_status)
+
+            if(dt_status == "Belum Tes"):
+                self.ids.bt_start.disabled = False
             else:
-                self.ids.bt_run.disabled = True
+                self.ids.bt_start.disabled = True
 
             if(not flag_play):
-                screen_counter.ids.bt_stop.md_bg_color = colors['Green']['200']
-                screen_counter.ids.bt_stop.disabled = False
-                screen_counter.ids.bt_run.md_bg_color = colors['Red']['A200']
-                screen_counter.ids.bt_run.disabled = False
+                screen_counter.ids.bt_save.md_bg_color = colors['Green']['200']
+                screen_counter.ids.bt_save.disabled = False
+                screen_counter.ids.bt_reload.md_bg_color = colors['Red']['A200']
+                screen_counter.ids.bt_reload.disabled = False
             else:
-                screen_counter.ids.bt_run.disabled = True
-                screen_counter.ids.bt_stop.disabled = True
+                screen_counter.ids.bt_reload.disabled = True
+                screen_counter.ids.bt_save.disabled = True
 
             if(not flag_conn_stat):
                 self.ids.lb_comm.color = colors['Red']['A200']
@@ -196,26 +228,41 @@ class ScreenMain(MDScreen):
                     toast('Device successfully connected')
 
             if(count_starting <= 0):
-                screen_counter.ids.lb_test_subtitle.text = "Nilai Kebisingan Terukur"
+                screen_counter.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
                 screen_counter.ids.lb_sound.text = str(np.round(dt_sound, 2))
+                screen_counter.ids.lb_info.text = "Ambang Batas Kebisingan adalah 83 dB hingga 118 dB"
                                                
             elif(count_starting > 0):
                 if(flag_play):
-                    screen_counter.ids.lb_test_subtitle.text = "Memulai Pengujian Kebisingan Dalam"
+                    screen_counter.ids.lb_test_subtitle.text = "MEMULAI PENGUKURAN"
                     screen_counter.ids.lb_sound.text = str(count_starting)
+                    screen_counter.ids.lb_info.text = "Silahkan Nyalakan Klakson Kendaraan"
+
+
+            if(dt_sound >= 83 and dt_sound <= 118):
+                screen_counter.ids.lb_info.text = "Kendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Dalam Range Ambang Batas"
+            elif(dt_sound < 83):
+                screen_counter.ids.lb_info.text = "Kendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Dibawah Ambang Batas"
+            elif(dt_sound > 118):
+                screen_counter.ids.lb_info.text = "Kendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Diatas Ambang Batas"
 
             if(count_get_data <= 0):
-                screen_counter.ids.lb_test_result.size_hint_y = 0.15
+                screen_counter.ids.lb_test_result.size_hint_y = 0.25
                 if(dt_sound >= 83 and dt_sound <= 118):
                     screen_counter.ids.lb_test_result.md_bg_color = colors['Green']['200']
                     screen_counter.ids.lb_test_result.text = "LULUS"
+                    dt_status = "Lulus"
+                    screen_counter.ids.lb_test_result.text_color = colors['Green']['700']
                 else:
                     screen_counter.ids.lb_test_result.md_bg_color = colors['Red']['A200']
-                    screen_counter.ids.lb_test_result.text = "GAGAL"
+                    screen_counter.ids.lb_test_result.text = "TIDAK LULUS"
+                    dt_status = "Tidak Lulus"
+                    screen_counter.ids.lb_test_result.text_color = colors['Red']['A700']
 
             elif(count_get_data > 0):
-                    screen_counter.ids.lb_test_result.size_hint_y = None
-                    screen_counter.ids.lb_test_result.height = dp(0)
+                    screen_counter.ids.lb_test_result.md_bg_color = colors['Gray']['700']
+                    # screen_counter.ids.lb_test_result.size_hint_y = None
+                    # screen_counter.ids.lb_test_result.height = dp(0)
                     screen_counter.ids.lb_test_result.text = ""
 
         except Exception as e:
@@ -258,11 +305,12 @@ class ScreenMain(MDScreen):
         global mydb, db_antrian
         try:
             mycursor = mydb.cursor()
-            mycursor.execute("SELECT noantrian, nouji, idjeniskendaraan, sts FROM tb_cekident")
+            mycursor.execute("SELECT noantrian, nopol, nouji, user, idjeniskendaraan, sts FROM tb_cekident")
             myresult = mycursor.fetchall()
             db_antrian = np.array(myresult).T
-            self.data_tables.row_data=[(f"{i+1}", f"{db_antrian[0, i]}", f"{db_antrian[1, i]}", f"{db_antrian[2, i]}", 
-                                        'Mulai Tes' if (int(db_antrian[3, i]) == 0) else ('Lulus' if (int(db_antrian[3, i]) == 1) else 'Gagal')) 
+            print(db_antrian)
+            self.data_tables.row_data=[(f"{i+1}", f"{db_antrian[0, i]}", f"{db_antrian[1, i]}", f"{db_antrian[2, i]}", f"{db_antrian[3, i]}" ,f"{db_antrian[4, i]}", 
+                                        'Belum Tes' if (int(db_antrian[5, i]) == 0) else ('Lulus' if (int(db_antrian[5, i]) == 1) else 'Tidak Lulus')) 
                                         for i in range(len(db_antrian[0]))]
 
         except Exception as e:
@@ -297,8 +345,8 @@ class ScreenCounter(MDScreen):
     def delayed_init(self, dt):
         pass
 
-    def exec_restart(self):
-        global flag_play, stream, p
+    def exec_start(self):
+        global flag_play
         global count_starting, count_get_data
 
         screen_main = self.screen_manager.get_screen('screen_main')
@@ -306,26 +354,57 @@ class ScreenCounter(MDScreen):
         count_starting = 3
         count_get_data = 10
 
-        self.ids.bt_run.disabled = True
+        if(not flag_play):
+            stream.start_stream()
+            Clock.schedule_interval(screen_main.regular_get_data, 1)
+            flag_play = True
+
+    def exec_reload(self):
+        global flag_play
+        global count_starting, count_get_data
+
+        screen_main = self.screen_manager.get_screen('screen_main')
+
+        count_starting = 3
+        count_get_data = 10
+        self.ids.bt_reload.disabled = True
 
         if(not flag_play):
             stream.start_stream()
             Clock.schedule_interval(screen_main.regular_get_data, 1)
             flag_play = True
 
-    def exec_stop(self):
-        global flag_play, stream, p
+    def exec_save(self):
+        global flag_play
         global count_starting, count_get_data
+        global mydb, db_antrian
+        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan, dt_status
 
-        count_starting = 3
-        count_get_data = 10
+        self.ids.bt_save.disabled = True
 
-        flag_play = False
-        self.ids.bt_stop.disabled = True
+        mycursor = mydb.cursor()
+
+        sql = "UPDATE tb_cekident SET sts = %s WHERE noantrian = %s"
+        val = (1 if dt_status == "Lulus" else 2, dt_no_antrian)
+
+        mycursor.execute(sql, val)
+
+        mydb.commit()
+
+        print(mycursor.rowcount, "record(s) affected")
 
         self.open_screen_main()
 
     def open_screen_main(self):
+        global flag_play        
+        global count_starting, count_get_data
+
+        screen_main = self.screen_manager.get_screen('screen_main')
+
+        count_starting = 3
+        count_get_data = 10
+        flag_play = False   
+        screen_main.exec_reload_table()
         self.screen_manager.current = 'screen_main'
 
 
@@ -338,10 +417,23 @@ class SoundLevelMeterApp(MDApp):
 
     def build(self):
         self.theme_cls.colors = colors
-        self.theme_cls.primary_palette = "Blue"
-        self.theme_cls.accent_palette = "Gray"
-        self.theme_cls.theme_style = "Dark"
+        self.theme_cls.primary_palette = "Gray"
+        self.theme_cls.accent_palette = "Blue"
+        self.theme_cls.theme_style = "Light"
         self.icon = 'asset/logo.png'
+
+        LabelBase.register(
+            name="Orbitron-Regular",
+            fn_regular="asset/font/Orbitron-Regular.ttf")
+
+        theme_font_styles.append('Display')
+        self.theme_cls.font_styles["Display"] = [
+            "Orbitron-Regular",
+            72,
+            False,
+            0.15,
+        ]       
+        
         Window.fullscreen = 'auto'
         Window.borderless = False
         # Window.size = 900, 1440

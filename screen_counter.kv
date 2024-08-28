@@ -11,10 +11,11 @@
             padding: 20
 			spacing: 20
 			size_hint_y: 0.2
+			md_bg_color: "#111111"
                     
             Image:
                 id: logo
-                source:'asset/logo-trb.png'
+                source:'asset/logo-trb-dark.png'
                 size_hint_x: 0.15
                 allow_stretch: True 
 
@@ -24,10 +25,13 @@
 
 				MDLabel:
 					id: title            
-					text: "VEHICLE INSPECTING INTEGRATION SYSTEM"
+					text: "VEHICLE INSPECTION INTEGRATION SYSTEM"
 					halign: "left"
 					valign: "middle"
 					font_style: 'H3'
+					theme_text_color: "Custom"
+					text_color: "#FFFFFF"
+
 
 				MDLabel:
 					id: subtitle            
@@ -35,6 +39,8 @@
 					halign: "left"
 					valign: "middle"
 					font_style: 'H5'
+					theme_text_color: "Custom"
+					text_color: "#FFFFFF"
 
 			MDBoxLayout:
 				orientation: "vertical"
@@ -43,7 +49,7 @@
 				MDIconButton:
 					id: bt_shutdown
 					icon: "power"
-					md_bg_color: "#A51919"
+					md_bg_color: "#FF2A2A"
 					theme_text_color: "Custom"
 					text_color: "#EEEEEE"
 					size_hint_x: 1
@@ -55,6 +61,8 @@
 					halign: "center"
 					valign: "middle"
 					font_style: 'H6'
+					theme_text_color: "Custom"
+					text_color: "#FFFFFF"
 
 				MDLabel:
 					id: lb_date
@@ -62,6 +70,8 @@
 					halign: "center"
 					valign: "middle"
 					font_style: 'H6'
+					theme_text_color: "Custom"
+					text_color: "#FFFFFF"
 
 				MDLabel:
 					id: lb_operator
@@ -69,6 +79,8 @@
 					halign: "center"
 					valign: "middle"
 					font_style: 'H6'
+					theme_text_color: "Custom"
+					text_color: "#FFFFFF"
 
 				MDLabel:
 					id: lb_comm
@@ -76,78 +88,189 @@
 					halign: "center"
 					valign: "middle"
 					font_style: 'H6'
+					theme_text_color: "Custom"
 
 		# main layout
 		MDBoxLayout:
 			id: layout_main
 			orientation: "horizontal"
-			size_hint_y: 0.6
+			size_hint_y: 0.7
 			padding:20
 			spacing:20
 
 			MDBoxLayout:
 				id: layout_display
-				orientation: "vertical"
-				padding:20
-				spacing:20
+				orientation: "horizontal"
 
 				MDBoxLayout:
 					orientation: "vertical"
+					size_hint_x: 0.5
+					padding:20
+					spacing:20
 
-					MDIconButton:
-						icon: "arrow-left"
-						on_press: root.open_screen_main()
-						size_hint_y: 0.05
+					MDBoxLayout:
+						orientation: "vertical"
+						size_hint_y: 0.75
+						spacing:10
 
-					MDLabel:
-						id: lb_test_subtitle
-						text: "Memulai Pengujian Kebisingan Dalam"
-						halign: "center"
-						valign: "middle"
-						font_style: 'Subtitle1'
-						size_hint_y: 0.05
+						MDLabel:
+							text: "IDENTITAS KENDARAAN"
+							halign: "center"
+							valign: "middle"
+							font_style: 'H6'
 
-					MDLabel:
-						id: lb_sound
-						text: "..."
-						halign: "center"
-						valign: "middle"
-						font_size: '200dp'
-						size_hint_y: 0.6
+						MDBoxLayout:
+							orientation: "horizontal"
+							MDLabel:
+								text: "No. Antrian"
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+							MDLabel:
+								id: lb_no_antrian
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+						MDBoxLayout:
+							orientation: "horizontal"
+							MDLabel:
+								text: "No. Reg"
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+							MDLabel:
+								id: lb_no_reg
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+						MDBoxLayout:
+							orientation: "horizontal"
+							MDLabel:
+								text: "No. Uji"
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+							MDLabel:
+								id: lb_no_uji
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+						MDBoxLayout:
+							orientation: "horizontal"
+							MDLabel:
+								text: "Nama"
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+							MDLabel:
+								id: lb_nama
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+						MDBoxLayout:
+							orientation: "horizontal"
+							MDLabel:
+								text: "Jenis Kendaraan"
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+							MDLabel:
+								id: lb_jenis_kendaraan
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
+
+						MDBoxLayout:
+							orientation: "horizontal"
+							MDLabel:
+								id: lb_status
+								halign: "left"
+								valign: "middle"
+								font_style: 'H6'
 
 					MDLabel:
 						id: lb_test_result
 						halign: "center"
 						valign: "middle"
+						theme_text_color: "Custom"
 						font_style: 'H3'
-						size_hint_y: 0.15
+						size_hint_y: 0.25
 
-					MDBoxLayout:
-						orientation: "horizontal"
-						size_hint_y: 0.15
+				MDBoxLayout:
+					orientation: "vertical"
+					size_hint_x: 0.5
 
-						MDFillRoundFlatIconButton:
-							id: bt_run
-							text: "TEST ULANG"
+					MDFloatLayout:
+						id: layout_sound
+
+						AsyncImage:
+							source: 'asset/pce-322A-display-width.png'
+							pos_hint: {'x':.0, 'y':.0}
+							fit_mode: 'contain' #scale-down, fill, contain, cover
+
+						MDLabel:
+							id: lb_test_subtitle
+							text: "MEMULAI PENGUKURAN"
+							halign: "center"
+							valign: "middle"
+							font_style: 'H6'
+							pos_hint: {'x':.0, 'y':.20}
+
+						MDLabel:
+							id: lb_sound
+							text: "..."
+							halign: "center"
+							valign: "middle"
+							font_style: 'Display'
+							font_size: '80dp'
+							pos_hint: {'x':.0, 'y':.0}
+
+						MDRectangleFlatIconButton:
+						# MDFloatingActionButton:
+							id: bt_reload
+							text: "ULANGI"
 							icon: "reload"
 							theme_text_color: "Custom"
 							text_color: "#EEEEEE"
-							md_bg_color: "#A51919"
-							size_hint_x: 0.3
+							pos_hint: {'x':.275, 'y':.06}
 							disabled: True
-							on_press: root.exec_restart()
+							on_press: root.exec_reload()
 
-						MDFillRoundFlatIconButton:
-							id: bt_stop
+						MDRectangleFlatIconButton:
+						# MDFloatingActionButton:
+							id: bt_save
+							text: "SIMPAN"
 							icon: "printer"
-							text: "PRINT & SIMPAN HASIL UKUR"
 							theme_text_color: "Custom"
 							text_color: "#EEEEEE"
-							md_bg_color: "#19A56B"
-							size_hint_x: 0.3
+							pos_hint: {'x':.425, 'y':.06}
 							disabled: True
-							on_press: root.exec_stop()
+							on_press: root.exec_save()
 
+						MDRectangleFlatIconButton:
+						# MDIconButton:
+						# MDFloatingActionButton:
+							id: bt_back
+							text: "KEMBALI"
+							icon: "arrow-left"
+							theme_text_color: "Custom"
+							md_bg_color: "4471C4"
+							text_color: "#EEEEEE"
+							pos_hint: {'x':.575, 'y':.06}
+							on_press: root.open_screen_main()
+
+
+									
+		# footer layout
         MDBoxLayout:
             orientation: "horizontal"
 			size_hint_y: 0.1
@@ -160,13 +283,11 @@
 				size_hint_x: 0.4
 				
 				Image:
-					id: logo
 					source:'asset/logo-sorong.png'
 					size_hint_x: 0.1
 					allow_stretch: True  
 
 				Image:
-					id: logo
 					source:'asset/logo-dishub.png'
 					size_hint_x: 0.1
 					allow_stretch: True  
@@ -188,7 +309,7 @@
 						font_style: 'Subtitle1'
 
 					MDLabel:			
-						text: "UNIT PELAKSANAAN UJI BERKALA KENDARAAN BERMOTOR"
+						text: "UNIT PELAKSANA UJI BERKALA KENDARAAN BERMOTOR"
 						halign: "left"
 						valign: "middle"
 						font_style: 'Subtitle1'
@@ -216,7 +337,8 @@
 					font_style: 'H5'
 
 				MDLabel:
-					text: " Ambang Batas Pengecekan adalah 83 dB hingga 118 dB"
+					id: lb_info
+					text: "Ambang Batas Kebisingan adalah 83 dB hingga 118 dB"
 					halign: "left"
 					valign: "middle"
 					font_style: 'H6'
