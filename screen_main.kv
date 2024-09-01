@@ -73,14 +73,16 @@
 					theme_text_color: "Custom"
 					text_color: "#FFFFFF"
 
-				MDLabel:
-					id: lb_operator
-					text: "Nama Operator"
-					halign: "center"
-					valign: "middle"
-					font_style: 'H6'
+
+				MDRectangleFlatIconButton:
+					id: bt_operator
+					text: "Silahkan Login"
+					icon: "login"
 					theme_text_color: "Custom"
-					text_color: "#FFFFFF"
+					text_color: "#EEEEEE"
+					md_bg_color: "4471C4"
+					size_hint_x: 1
+					on_press: root.show_login_dialog()
 
 				MDLabel:
 					id: lb_comm

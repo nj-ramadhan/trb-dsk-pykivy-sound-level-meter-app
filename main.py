@@ -6,6 +6,9 @@ from kivymd.font_definitions import theme_font_styles
 from kivymd.uix.datatables import MDDataTable
 from kivy.uix.screenmanager import ScreenManager
 from kivymd.uix.screen import MDScreen
+from kivymd.uix.dialog import MDDialog
+from kivy.uix.boxlayout import BoxLayout
+from kivymd.uix.button import MDFlatButton
 from kivymd.app import MDApp
 from kivy.metrics import dp
 from kivymd.toast import toast
@@ -19,6 +22,7 @@ import mysql.connector
 from escpos.printer import Serial
 import configparser
 import serial.tools.list_ports as ports
+import hashlib
 
 colors = {
     "Red": {
@@ -91,14 +95,16 @@ dt_slm_value = 45.5
 dt_slm_flag = 0
 dt_slm_user = 1
 dt_slm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
-dt_user = ""
+dt_user = "SILAHKAN LOGIN"
 dt_no_antrian = ""
 dt_no_reg = ""
 dt_no_uji = ""
 dt_nama = ""
 dt_jenis_kendaraan = ""
 
-class ScreenMain(MDScreen):        
+class ScreenMain(MDScreen):   
+    dialog = None
+
     def __init__(self, **kwargs):
         super(ScreenMain, self).__init__(**kwargs)
         global mydb, db_antrian
@@ -107,7 +113,7 @@ class ScreenMain(MDScreen):
         global count_starting, count_get_data
 
         Clock.schedule_interval(self.regular_update_connection, 5)
-        Clock.schedule_once(self.delayed_init, 2)
+        Clock.schedule_once(self.delayed_init, 1)
 
         flag_conn_stat = False
         flag_play = False
@@ -201,7 +207,7 @@ class ScreenMain(MDScreen):
     def regular_update_display(self, dt):
         global flag_conn_stat
         global dt_slm_value, count_starting, count_get_data
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
+        global dt_user, dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
         global dt_slm_flag, dt_slm_value, dt_slm_user, dt_slm_post
         try:
             screen_counter = self.screen_manager.get_screen('screen_counter')
@@ -285,6 +291,9 @@ class ScreenMain(MDScreen):
                     # screen_counter.ids.lb_test_result.height = dp(0)
                     screen_counter.ids.lb_test_result.text = ""
 
+            self.ids.bt_operator.text = dt_user
+            screen_counter.ids.lb_operator.text = dt_user
+
         except Exception as e:
             toast_msg = f'error update display: {e}'
             toast(toast_msg)                
@@ -327,7 +336,7 @@ class ScreenMain(MDScreen):
             mycursor.execute("SELECT noantrian, nopol, nouji, user, idjeniskendaraan, slm_flag FROM tb_cekident")
             myresult = mycursor.fetchall()
             db_antrian = np.array(myresult).T
-            print(db_antrian)
+
             self.data_tables.row_data=[(f"{i+1}", f"{db_antrian[0, i]}", f"{db_antrian[1, i]}", f"{db_antrian[2, i]}", f"{db_antrian[3, i]}" ,f"{db_antrian[4, i]}", 
                                         'Belum Tes' if (int(db_antrian[5, i]) == 0) else ('Lulus' if (int(db_antrian[5, i]) == 1) else 'Tidak Lulus')) 
                                         for i in range(len(db_antrian[0]))]
@@ -348,6 +357,16 @@ class ScreenMain(MDScreen):
             # stream.close()
             # audio.terminate()  
 
+    def show_login_dialog(self):
+        if not self.dialog:
+            self.dialog = MDDialog(
+                title="Silahkan Masuk",
+                type="custom",
+                content_cls=ContentLogin(),
+                md_bg_color= colors['Gray']['200'],
+            )
+        self.dialog.open()
+
     def open_screen_counter(self):
         self.screen_manager.current = 'screen_counter'
 
@@ -355,6 +374,44 @@ class ScreenMain(MDScreen):
         os.system("shutdown /s /t 1") #for windows os
         toast("shutting down system")
         # os.system("shutdown -h now")
+
+class ContentLogin(BoxLayout):
+    def __init__(self, **kwargs):
+        super(ContentLogin, self).__init__(**kwargs)
+        self.ids.bt_login.theme_text_color="Custom"
+        self.ids.bt_login.md_bg_color = colors['Green']['200']
+
+
+    def exec_login(self):
+        global mydb, db_users
+        global dt_slm_user, dt_user
+
+        try:
+            input_username = self.ids.tx_username.text
+            input_password = self.ids.tx_password.text        
+            # Adding salt at the last of the password
+            dataBase_password = input_password
+            # Encoding the password
+            hashed_password = hashlib.md5(dataBase_password.encode())
+
+            mycursor = mydb.cursor()
+            mycursor.execute("SELECT id_user, nama, username, password, nama FROM users WHERE username = '"+str(input_username)+"' and password = '"+str(hashed_password.hexdigest())+"'")
+            myresult = mycursor.fetchone()
+            db_users = np.array(myresult).T
+            #if invalid
+            if myresult == 0:
+                toast('Gagal Masuk, Nama Pengguna atau Password Salah')
+            #else, if valid
+            else:
+                toast_msg = f'Berhasil Masuk, Selamat Datang {myresult[1]}'
+                toast(toast_msg)
+                dt_slm_user = myresult[0]
+                dt_user = myresult[1]
+                
+        except Exception as e:
+            toast_msg = f'error Login: {e}'
+            toast(toast_msg)        
+            toast('Gagal Masuk, Nama Pengguna atau Password Salah')
 
 class ScreenCounter(MDScreen):        
     def __init__(self, **kwargs):
@@ -454,9 +511,8 @@ class ScreenCounter(MDScreen):
         screen_main.exec_reload_table()
         self.screen_manager.current = 'screen_main'
 
-
 class RootScreen(ScreenManager):
-    pass
+    pass             
 
 class SoundLevelMeterApp(MDApp):
     def __init__(self, **kwargs):

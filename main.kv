@@ -17,5 +17,25 @@
     ScreenCounter:
         id: screen_counter
         name: 'screen_counter'
-        screen_manager: screen_manager
-                  
+        screen_manager: screen_manager   
+
+<ContentLogin>
+    orientation: "vertical"
+    spacing: "8dp"
+    size_hint_y: None
+    height: "180dp"
+
+    MDTextField:
+        id: tx_username
+        hint_text: "Nama Pengguna"
+
+    MDTextField:
+        id: tx_password
+        hint_text: "Password"
+        password: True
+
+    MDRectangleFlatIconButton:
+        id: bt_login
+        icon: "check"
+        text:"MASUK"
+        on_press: root.exec_login()
