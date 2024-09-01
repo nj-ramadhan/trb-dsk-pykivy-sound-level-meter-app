@@ -1,17 +1,13 @@
-from cv2 import DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMINGLUT
 from kivy.clock import Clock
 from kivy.lang import Builder
-from kivy.logger import Logger
 from kivy.core.window import Window
 from kivy.core.text import LabelBase
 from kivymd.font_definitions import theme_font_styles
 from kivymd.uix.datatables import MDDataTable
 from kivy.uix.screenmanager import ScreenManager
 from kivymd.uix.screen import MDScreen
-from kivymd.uix.button import MDFillRoundFlatButton
 from kivymd.app import MDApp
-from kivymd import fonts_path
-from kivy.metrics import dp, sp
+from kivy.metrics import dp
 from kivymd.toast import toast
 import numpy as np
 import time
@@ -20,6 +16,9 @@ import pyaudio
 from math import log10
 import audioop  
 import mysql.connector
+from escpos.printer import Serial
+import configparser
+import serial.tools.list_ports as ports
 
 colors = {
     "Red": {
@@ -43,7 +42,7 @@ colors = {
     "Green": {
         "200": "#2CA02C", #41cd93
         "500": "#2DB97F",
-        "700": "#AAA5AA",
+        "700": "#D5FFD5",
     },
 
     "Yellow": {
@@ -69,13 +68,17 @@ colors = {
     },
 }
 
-VENDOR_ID = 0x04F2
-PRODUCT_ID = 0xB6A8
-SER_BAUD = 9600
-SER_PORT = "COM9"
-SER_DTR = 1
-SER_DSR = True
-SER_TIMEOUT = 1
+#load credentials from config.ini
+config = configparser.ConfigParser()
+config.read('config.ini')
+DB_HOST = config['mysql']['DB_HOST']
+DB_USER = config['mysql']['DB_USER']
+DB_PASSWORD = config['mysql']['DB_PASSWORD']
+DB_NAME = config['mysql']['DB_NAME']
+TB_SLM = config['mysql']['TB_SLM']
+TB_USER = config['mysql']['TB_USER']
+
+COM_PORT_PRINTER = config['device']['COM_PORT_PRINTER']
 
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
@@ -84,51 +87,72 @@ CHUNK = 1024
 RECORD_SECONDS = 0.8
 WIDTH = 2
 
-sound_rms = 1
-flag_device = False
-flag_conn_stat = False
-flag_play = False
-
-dt_sound = 45.5
+dt_slm_value = 45.5
+dt_slm_flag = 0
+dt_slm_user = 1
+dt_slm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
+dt_user = ""
 dt_no_antrian = ""
 dt_no_reg = ""
 dt_no_uji = ""
 dt_nama = ""
 dt_jenis_kendaraan = ""
-dt_status = ""
-
-count_starting = 3
-count_get_data = 10
-
-p = pyaudio.PyAudio() # start the PyAudio class
-stream=p.open(format=FORMAT,channels=CHANNELS,rate=RATE,input=True,
-        frames_per_buffer=CHUNK) #uses default input device
 
 class ScreenMain(MDScreen):        
     def __init__(self, **kwargs):
         super(ScreenMain, self).__init__(**kwargs)
         global mydb, db_antrian
+        global audio, stream
+        global flag_conn_stat, flag_play
+        global count_starting, count_get_data
 
+        Clock.schedule_interval(self.regular_update_connection, 5)
+        Clock.schedule_once(self.delayed_init, 2)
+
+        flag_conn_stat = False
+        flag_play = False
+
+        count_starting = 3
+        count_get_data = 10
         try:
             mydb = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="db_trb"
+            host = DB_HOST,
+            user = DB_USER,
+            password = DB_PASSWORD,
+            database = DB_NAME
             )
 
-            db_antrian = np.array([["001", "002", "003"],
-                                    ["PB123XY","PB234YZ","PB345XZ"],
-                                    [ "Z1234SA", "Z2345SP", "Z3456SM"],
-                                    [ "Budi", "Ani", "Udin"],
-                                    [ "Pick-Up", "Pribadi", "travel"],
-                                    [ "0", "0", "1"]])
+            audio = pyaudio.PyAudio() # start the PyAudio class
+            stream = audio.open(format=FORMAT,channels=CHANNELS,rate=RATE,input=True,
+                    frames_per_buffer=CHUNK) #uses default input device
+
         except Exception as e:
             toast_msg = f'error initiate Database: {e}'
+            toast(toast_msg)           
+
+    def regular_update_connection(self, dt):
+        global printer
+        global flag_conn_stat
+
+        try:
+            com_ports = list(ports.comports()) # create a list of com ['COM1','COM2'] 
+            for i in com_ports:
+                if i.name == COM_PORT_PRINTER:
+                    flag_conn_stat = True
+
+            printer = Serial(devfile = COM_PORT_PRINTER,
+                    baudrate = 38400,
+                    bytesize = 8,
+                    parity = 'N',
+                    stopbits = 1,
+                    timeout = 1.00,
+                    dsrdtr = True)            
+
+        except Exception as e:
+            toast_msg = f'error initiate Printer'
             toast(toast_msg)   
-                    
-        Clock.schedule_once(self.delayed_init, 2)
-        
+            flag_conn_stat = False
+
     def delayed_init(self, dt):
         Clock.schedule_interval(self.regular_update_display, 1)
         layout = self.ids.layout_table
@@ -158,7 +182,8 @@ class ScreenMain(MDScreen):
             toast("Error sorting data")
 
     def on_row_press(self, table, row):
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan, dt_status
+        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
+        global dt_slm_flag, dt_slm_value, dt_slm_user, dt_slm_post
 
         try:
             start_index, end_index  = row.table.recycle_data[row.index]["range"]
@@ -167,17 +192,17 @@ class ScreenMain(MDScreen):
             dt_no_uji               = row.table.recycle_data[start_index + 3]["text"]
             dt_nama                 = row.table.recycle_data[start_index + 4]["text"]
             dt_jenis_kendaraan      = row.table.recycle_data[start_index + 5]["text"]
-            dt_status               = row.table.recycle_data[start_index + 6]["text"]
+            dt_slm_flag             = row.table.recycle_data[start_index + 6]["text"]
 
         except Exception as e:
             toast_msg = f'error update table: {e}'
             toast(toast_msg)   
 
     def regular_update_display(self, dt):
-        global flag_conn_stat, flag_device
-        global dt_sound, count_starting, count_get_data
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan, dt_status
-
+        global flag_conn_stat
+        global dt_slm_value, count_starting, count_get_data
+        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
+        global dt_slm_flag, dt_slm_value, dt_slm_user, dt_slm_post
         try:
             screen_counter = self.screen_manager.get_screen('screen_counter')
             self.ids.lb_time.text = str(time.strftime("%H:%M:%S", time.localtime()))
@@ -190,16 +215,14 @@ class ScreenMain(MDScreen):
             self.ids.lb_no_uji.text = str(dt_no_uji)
             self.ids.lb_nama.text = str(dt_nama)
             self.ids.lb_jenis_kendaraan.text = str(dt_jenis_kendaraan)
-            # self.ids.lb_status.text = str(dt_status)
 
             screen_counter.ids.lb_no_antrian.text = str(dt_no_antrian)
             screen_counter.ids.lb_no_reg.text = str(dt_no_reg)
             screen_counter.ids.lb_no_uji.text = str(dt_no_uji)
             screen_counter.ids.lb_nama.text = str(dt_nama)
             screen_counter.ids.lb_jenis_kendaraan.text = str(dt_jenis_kendaraan)
-            # screen_counter.ids.lb_status.text = str(dt_status)
 
-            if(dt_status == "Belum Tes"):
+            if(dt_slm_flag == "Belum Tes"):
                 self.ids.bt_start.disabled = False
             else:
                 self.ids.bt_start.disabled = True
@@ -215,21 +238,19 @@ class ScreenMain(MDScreen):
 
             if(not flag_conn_stat):
                 self.ids.lb_comm.color = colors['Red']['A200']
-                self.ids.lb_comm.text = 'Status : Disconnected'
+                self.ids.lb_comm.text = 'Printer Tidak Terhubung'
                 screen_counter.ids.lb_comm.color = colors['Red']['A200']
-                screen_counter.ids.lb_comm.text = 'Status : Disconnected'
+                screen_counter.ids.lb_comm.text = 'Printer Tidak Terhubung'
 
             else:
-                # self.ids.lb_comm.color = colors['Blue']['200']
-                self.ids.lb_comm.text = 'Status : Connected'
-                # screen_counter.ids.lb_comm.color = colors['Blue']['200']
-                screen_counter.ids.lb_comm.text = 'Status : Connected'
-                if(not flag_device):
-                    toast('Device successfully connected')
+                self.ids.lb_comm.color = colors['Blue']['200']
+                self.ids.lb_comm.text = 'Printer Terhubung'
+                screen_counter.ids.lb_comm.color = colors['Blue']['200']
+                screen_counter.ids.lb_comm.text = 'Printer Terhubung'
 
             if(count_starting <= 0):
                 screen_counter.ids.lb_test_subtitle.text = "HASIL PENGUKURAN"
-                screen_counter.ids.lb_sound.text = str(np.round(dt_sound, 2))
+                screen_counter.ids.lb_sound.text = str(np.round(dt_slm_value, 2))
                 screen_counter.ids.lb_info.text = "Ambang Batas Kebisingan adalah 83 dB hingga 118 dB"
                                                
             elif(count_starting > 0):
@@ -238,25 +259,24 @@ class ScreenMain(MDScreen):
                     screen_counter.ids.lb_sound.text = str(count_starting)
                     screen_counter.ids.lb_info.text = "Silahkan Nyalakan Klakson Kendaraan"
 
-
-            if(dt_sound >= 83 and dt_sound <= 118):
+            if(dt_slm_value >= 83 and dt_slm_value <= 118):
                 screen_counter.ids.lb_info.text = "Kendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Dalam Range Ambang Batas"
-            elif(dt_sound < 83):
+            elif(dt_slm_value < 83):
                 screen_counter.ids.lb_info.text = "Kendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Dibawah Ambang Batas"
-            elif(dt_sound > 118):
+            elif(dt_slm_value > 118):
                 screen_counter.ids.lb_info.text = "Kendaraan Anda Memiliki Tingkat Kebisingan Suara Klakson Diatas Ambang Batas"
 
             if(count_get_data <= 0):
                 screen_counter.ids.lb_test_result.size_hint_y = 0.25
-                if(dt_sound >= 83 and dt_sound <= 118):
+                if(dt_slm_value >= 83 and dt_slm_value <= 118):
                     screen_counter.ids.lb_test_result.md_bg_color = colors['Green']['200']
                     screen_counter.ids.lb_test_result.text = "LULUS"
-                    dt_status = "Lulus"
+                    dt_slm_flag = "Lulus"
                     screen_counter.ids.lb_test_result.text_color = colors['Green']['700']
                 else:
                     screen_counter.ids.lb_test_result.md_bg_color = colors['Red']['A200']
                     screen_counter.ids.lb_test_result.text = "TIDAK LULUS"
-                    dt_status = "Tidak Lulus"
+                    dt_slm_flag = "Tidak Lulus"
                     screen_counter.ids.lb_test_result.text_color = colors['Red']['A700']
 
             elif(count_get_data > 0):
@@ -271,8 +291,7 @@ class ScreenMain(MDScreen):
 
     def regular_get_data(self, dt):
         global flag_play
-        global dt_sound
-        global sound_rms
+        global dt_slm_value
         global count_starting, count_get_data
         try:
             if(count_starting > 0):
@@ -295,7 +314,7 @@ class ScreenMain(MDScreen):
                 dBA = dB if sound_rms > 0.03 else dB - (((0.3 - sound_rms) * 15 ) ** 2 )
                 # mod_dB = 20 * log10(sound_rms) + 93.37
                 # print(f"RMS: {sound_rms} DB: {db} mod_Amp: {mod_Amp} mod_dB: {mod_dB}") 
-                dt_sound = dBA
+                dt_slm_value = dBA
                 
         except Exception as e:
             toast_msg = f'error get data: {e}'
@@ -305,7 +324,7 @@ class ScreenMain(MDScreen):
         global mydb, db_antrian
         try:
             mycursor = mydb.cursor()
-            mycursor.execute("SELECT noantrian, nopol, nouji, user, idjeniskendaraan, sts FROM tb_cekident")
+            mycursor.execute("SELECT noantrian, nopol, nouji, user, idjeniskendaraan, slm_flag FROM tb_cekident")
             myresult = mycursor.fetchall()
             db_antrian = np.array(myresult).T
             print(db_antrian)
@@ -318,7 +337,7 @@ class ScreenMain(MDScreen):
             print(toast_msg)
 
     def exec_start(self):
-        global flag_play, stream, p
+        global flag_play, stream, audio
 
         if(not flag_play):
             stream.start_stream()
@@ -327,7 +346,7 @@ class ScreenMain(MDScreen):
             flag_play = True
 
             # stream.close()
-            # p.terminate()  
+            # audio.terminate()  
 
     def open_screen_counter(self):
         self.screen_manager.current = 'screen_counter'
@@ -378,20 +397,48 @@ class ScreenCounter(MDScreen):
         global flag_play
         global count_starting, count_get_data
         global mydb, db_antrian
-        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan, dt_status
+        global dt_no_antrian, dt_no_reg, dt_no_uji, dt_nama, dt_jenis_kendaraan
+        global dt_slm_flag, dt_slm_value, dt_slm_user, dt_slm_post
+        global printer
 
         self.ids.bt_save.disabled = True
 
         mycursor = mydb.cursor()
 
-        sql = "UPDATE tb_cekident SET sts = %s WHERE noantrian = %s"
-        val = (1 if dt_status == "Lulus" else 2, dt_no_antrian)
-
-        mycursor.execute(sql, val)
-
+        sql = "UPDATE tb_cekident SET slm_flag = %s, slm_value = %s, slm_user = %s, slm_post = %s WHERE noantrian = %s"
+        sql_slm_flag = (1 if dt_slm_flag == "Lulus" else 2)
+        dt_slm_post = str(time.strftime("%Y/%m/%d %H:%M:%S", time.localtime()))
+        print_datetime = str(time.strftime("%d %B %Y %H:%M:%S", time.localtime()))
+        sql_val = (sql_slm_flag, dt_slm_value, dt_slm_user, dt_slm_post, dt_no_antrian)
+        mycursor.execute(sql, sql_val)
         mydb.commit()
 
-        print(mycursor.rowcount, "record(s) affected")
+        printer.set(align="center", normal_textsize=True)
+        printer.image("asset/logo-dishub-print.png")
+        printer.ln()
+        printer.textln("HASIL UJI LEVEL KEBISINGAN KLAKSON KENDARAAN")
+        printer.set(bold=True)
+        printer.textln(f"Tanggal: {print_datetime}")
+        printer.textln("=======================================")
+        printer.set(align="left", normal_textsize=True)
+        printer.textln(f"No Antrian: {dt_no_antrian}")
+        printer.text(f"No Reg: {dt_no_reg}\t")
+        printer.textln(f"No Uji: {dt_no_uji}")
+        printer.textln(f"Nama: {dt_nama}")
+        printer.textln(f"Jenis Kendaraan: {dt_jenis_kendaraan}")
+        printer.textln("  ")
+        printer.set(double_height=True, double_width=True)
+        printer.text(f"Status:\t")
+        printer.set(bold=True)
+        printer.textln(f"{dt_slm_flag}")
+        printer.set(bold=False)
+        printer.text(f"Nilai:\t")
+        printer.set(bold=True)
+        printer.textln(f"{str(np.round(dt_slm_value, 2))}")
+        printer.set(align="center", normal_textsize=True)     
+        printer.textln("  ")
+        printer.image("asset/logo-trb-print.png")
+        printer.cut()
 
         self.open_screen_main()
 
@@ -428,14 +475,10 @@ class SoundLevelMeterApp(MDApp):
 
         theme_font_styles.append('Display')
         self.theme_cls.font_styles["Display"] = [
-            "Orbitron-Regular",
-            72,
-            False,
-            0.15,
-        ]       
+            "Orbitron-Regular", 72, False, 0.15]       
         
         Window.fullscreen = 'auto'
-        Window.borderless = False
+        # Window.borderless = False
         # Window.size = 900, 1440
         # Window.size = 450, 720
         # Window.allow_screensaver = True
