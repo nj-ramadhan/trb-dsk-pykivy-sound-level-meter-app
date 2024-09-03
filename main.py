@@ -7,8 +7,7 @@ from kivymd.uix.datatables import MDDataTable
 from kivy.uix.screenmanager import ScreenManager
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.dialog import MDDialog
-from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.button import MDFlatButton
+from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.app import MDApp
 from kivy.metrics import dp
 from kivymd.toast import toast
@@ -375,12 +374,11 @@ class ScreenMain(MDScreen):
         toast("shutting down system")
         # os.system("shutdown -h now")
 
-class ContentLogin(BoxLayout):
+class ContentLogin(MDBoxLayout):
     def __init__(self, **kwargs):
         super(ContentLogin, self).__init__(**kwargs)
         self.ids.bt_login.theme_text_color="Custom"
         self.ids.bt_login.md_bg_color = colors['Green']['200']
-
 
     def exec_login(self):
         global mydb, db_users
